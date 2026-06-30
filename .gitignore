@@ -1,0 +1,12 @@
+# 编译产物
+myreadelf
+src/*.o
+
+# 大型参考资料（超过GitHub单文件100MB限制）
+*.pdf
+*.rtf
+
+# 临时文件
+~$*
+*.tmp
+.spec-workflow/
