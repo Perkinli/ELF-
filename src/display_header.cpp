@@ -13,21 +13,26 @@
 
 #include "elf_parser.h"
 #include "elf_strings.h"
+#include "color.h"
 #include <cstdio>
 
 void display_elf_header(const ELFParser& elf) {
     const unsigned char* ident = elf.e_ident();
 
-    printf("ELF Header:\n");
+    printf("%sELF Header:%s\n", C_BOLD, C_RESET);
 
-    /* ── 魔数（16字节标识信息） ── */
+    /* ── 魔数（前4字节高亮） ── */
     printf("  Magic:   ");
-    for (int i = 0; i < EI_NIDENT; i++)
-        printf("%02x ", ident[i]);
+    for (int i = 0; i < EI_NIDENT; i++) {
+        if (i < 4)
+            printf("%s%02x%s ", C_BGREEN, ident[i], C_RESET);
+        else
+            printf("%02x ", ident[i]);
+    }
     printf("\n");
 
-    printf("  %-34s %s\n", "Class:",
-           elf_class_str(ident[EI_CLASS]));
+    printf("  %-34s %s%s%s\n", "Class:",
+           C_CYAN, elf_class_str(ident[EI_CLASS]), C_RESET);
 
     printf("  %-34s %s\n", "Data:",
            elf_data_str(ident[EI_DATA]));
@@ -42,45 +47,29 @@ void display_elf_header(const ELFParser& elf) {
     printf("  %-34s %u\n", "ABI Version:",
            ident[EI_ABIVERSION]);
 
-    /* ── ELF头主体字段 ── */
-    printf("  %-34s %s\n", "Type:",
-           elf_type_str(elf.getType()));
+    printf("  %-34s %s%s%s\n", "Type:",
+           C_YELLOW, elf_type_str(elf.getType()), C_RESET);
 
-    printf("  %-34s %s\n", "Machine:",
-           elf_machine_str(elf.getMachine()));
+    printf("  %-34s %s%s%s\n", "Machine:",
+           C_CYAN, elf_machine_str(elf.getMachine()), C_RESET);
 
-    printf("  %-34s 0x%x\n", "Version:",
-           elf.getVersion());
+    printf("  %-34s 0x%x\n", "Version:", elf.getVersion());
 
-    printf("  %-34s 0x%lx\n", "Entry point address:",
-           (unsigned long)elf.getEntry());
+    printf("  %-34s %s0x%lx%s\n", "Entry point address:",
+           C_BGREEN, (unsigned long)elf.getEntry(), C_RESET);
 
     printf("  %-34s %lu (bytes into file)\n",
-           "Start of program headers:",
-           (unsigned long)elf.getPhoff());
+           "Start of program headers:", (unsigned long)elf.getPhoff());
 
     printf("  %-34s %lu (bytes into file)\n",
-           "Start of section headers:",
-           (unsigned long)elf.getShoff());
+           "Start of section headers:", (unsigned long)elf.getShoff());
 
-    printf("  %-34s 0x%x\n", "Flags:",
-           elf.getFlags());
+    printf("  %-34s 0x%x\n", "Flags:", elf.getFlags());
 
-    printf("  %-34s %u (bytes)\n", "Size of this header:",
-           elf.getEhsize());
-
-    printf("  %-34s %u (bytes)\n", "Size of program headers:",
-           elf.getPhentsize());
-
-    printf("  %-34s %u\n", "Number of program headers:",
-           elf.getPhnum());
-
-    printf("  %-34s %u (bytes)\n", "Size of section headers:",
-           elf.getShentsize());
-
-    printf("  %-34s %u\n", "Number of section headers:",
-           elf.getShnum());
-
-    printf("  %-34s %u\n", "Section header string table index:",
-           elf.getShstrndx());
+    printf("  %-34s %u (bytes)\n", "Size of this header:", elf.getEhsize());
+    printf("  %-34s %u (bytes)\n", "Size of program headers:", elf.getPhentsize());
+    printf("  %-34s %u\n",         "Number of program headers:", elf.getPhnum());
+    printf("  %-34s %u (bytes)\n", "Size of section headers:", elf.getShentsize());
+    printf("  %-34s %u\n",         "Number of section headers:", elf.getShnum());
+    printf("  %-34s %u\n",         "Section header string table index:", elf.getShstrndx());
 }

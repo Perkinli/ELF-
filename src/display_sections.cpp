@@ -22,37 +22,36 @@
 
 #include "elf_parser.h"
 #include "elf_strings.h"
+#include "color.h"
 #include <cstdio>
 #include <string>
 
 /* ─── 辅助：打印Section Header表格行（32/64位通用） ─────── */
 static void print_shdr_row(int idx, const SecInfo& s, bool is64) {
     std::string dname = s.name.size() > 17 ? s.name.substr(0, 17) : s.name;
-    printf("  [%2d] %-17s %-15s ",
-           idx,
-           dname.c_str(),
-           shtype_str(s.type));
+
+    /* 节区名：青色；节区类型：按类型着色 */
+    printf("  [%s%2d%s] %s%-17s%s %s%-15s%s ",
+           C_DIM, idx, C_RESET,
+           C_CYAN, dname.c_str(), C_RESET,
+           shtype_color(s.type), shtype_str(s.type), C_RESET);
 
     if (is64) {
-        printf("%016lx  %08lx\n",
-               (unsigned long)s.addr,
+        printf("%s%016lx%s  %08lx\n",
+               C_BWHITE, (unsigned long)s.addr, C_RESET,
                (unsigned long)s.offset);
-        printf("       %016lx  %016lx %3s  %5u %5u %5lu\n",
-               (unsigned long)s.size,
-               (unsigned long)s.entsize,
-               shflags_str(s.flags).c_str(),
-               s.link, s.info,
-               (unsigned long)s.addralign);
+        printf("       %016lx  %016lx ",
+               (unsigned long)s.size, (unsigned long)s.entsize);
+        print_flags_colored(s.flags);
+        printf("  %5u %5u %5lu\n", s.link, s.info, (unsigned long)s.addralign);
     } else {
-        printf("%08lx  %06lx\n",
-               (unsigned long)s.addr,
+        printf("%s%08lx%s  %06lx\n",
+               C_BWHITE, (unsigned long)s.addr, C_RESET,
                (unsigned long)s.offset);
-        printf("       %08lx  %08lx %3s  %5u %5u %3lu\n",
-               (unsigned long)s.size,
-               (unsigned long)s.entsize,
-               shflags_str(s.flags).c_str(),
-               s.link, s.info,
-               (unsigned long)s.addralign);
+        printf("       %08lx  %08lx ",
+               (unsigned long)s.size, (unsigned long)s.entsize);
+        print_flags_colored(s.flags);
+        printf("  %5u %5u %3lu\n", s.link, s.info, (unsigned long)s.addralign);
     }
 }
 

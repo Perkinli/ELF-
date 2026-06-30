@@ -31,10 +31,12 @@ struct ELFOptions {
     bool version_info     = false;  // -V  版本信息
     bool arch_specific    = false;  // -A  架构相关信息
     bool histogram        = false;  // -I  哈希桶柱状图
-    bool section_groups   = false;  // -g  节组信息
-    bool all_headers      = false;  // -e  = -h + -l + -S
-    bool got_plt          = false;  // --got-plt  GOT/PLT分析（扩展功能）
-    bool wide             = false;  // -W  宽输出
+    bool section_groups   = false;  // -g       节组信息
+    bool checksec         = false;  // --checksec 安全属性扫描
+    bool layout           = false;  // --layout   文件布局可视化
+    bool all_headers      = false;  // -e       = -h + -l + -S
+    bool got_plt          = false;  // --got-plt GOT/PLT分析（扩展功能）
+    bool wide             = false;  // -W       宽输出
     int  hex_section_num  = -1;     // -x <number>
     std::string hex_section_name;   // -x <name>
 };

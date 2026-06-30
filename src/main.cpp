@@ -25,12 +25,16 @@
 
 #include "elf_parser.h"
 #include "elf_strings.h"
+#include "color.h"
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <string>
 #include <vector>
 #include <getopt.h>
+
+/* 全局颜色开关（color.h extern 声明） */
+bool g_color = false;
 
 /* ── 显示函数前向声明 ─────────────────────────────────────── */
 void display_elf_header(const ELFParser& elf);
@@ -46,6 +50,8 @@ void display_version_info(const ELFParser& elf);
 void display_histogram(const ELFParser& elf);
 void display_section_groups(const ELFParser& elf);
 void display_arch_specific(const ELFParser& elf);
+void display_checksec(const ELFParser& elf);
+void display_layout(const ELFParser& elf);
 void display_got_plt(const ELFParser& elf);
 
 /* ── 帮助信息 ─────────────────────────────────────────────── */
@@ -73,6 +79,9 @@ static void print_usage(const char* prog) {
         "  -I              显示符号哈希桶柱状图\n"
         "  -x <num|name>   以十六进制显示指定节区内容\n"
         "  --got-plt       显示GOT/PLT表深度分析（扩展功能）\n"
+        "  --checksec      显示安全属性全面扫描\n"
+        "  --layout        显示ELF文件布局可视化地图\n"
+        "  -C, --color     启用彩色输出\n"
         "  -W              宽输出模式\n"
         "  -v              显示版本信息\n"
         "  -H              显示此帮助\n"
@@ -114,6 +123,9 @@ static struct option long_options[] = {
     {"histogram",    no_argument,       nullptr, 'I'},
     {"hex-dump",     required_argument, nullptr, 'x'},
     {"got-plt",      no_argument,       nullptr,  1 },  /* 自定义 */
+    {"checksec",     no_argument,       nullptr,  2 },  /* 自定义 */
+    {"layout",       no_argument,       nullptr,  3 },  /* 自定义 */
+    {"color",        no_argument,       nullptr, 'C'},
     {"wide",         no_argument,       nullptr, 'W'},
     {"version",      no_argument,       nullptr, 'v'},
     {"help",         no_argument,       nullptr, 'H'},
@@ -168,6 +180,12 @@ static int process_file(const std::string& filename,
     if (opts.got_plt)
         display_got_plt(elf);
 
+    if (opts.checksec)
+        display_checksec(elf);
+
+    if (opts.layout)
+        display_layout(elf);
+
     return 0;
 }
 
@@ -181,7 +199,7 @@ int main(int argc, char* argv[]) {
     ELFOptions opts;
     int opt;
 
-    while ((opt = getopt_long(argc, argv, "ahlStesrDdnVAIgx:WvH",
+    while ((opt = getopt_long(argc, argv, "ahlStesrDdnVAIgx:CWvH",
                               long_options, nullptr)) != -1) {
         switch (opt) {
         case 'a':
@@ -206,8 +224,11 @@ int main(int argc, char* argv[]) {
         case 'A': opts.arch_specific   = true; break;
         case 'g': opts.section_groups  = true; break;
         case 'I': opts.histogram       = true; break;
+        case 'C': g_color              = true; break;
         case 'W': opts.wide            = true; break;
-        case 1:   opts.got_plt         = true; break;  /* --got-plt */
+        case 1:   opts.got_plt         = true; break;  /* --got-plt  */
+        case 2:   opts.checksec        = true; break;  /* --checksec */
+        case 3:   opts.layout          = true; break;  /* --layout   */
         case 'x':
             /* -x 可接受节区编号或名称 */
             if (optarg && optarg[0] >= '0' && optarg[0] <= '9') {
@@ -234,7 +255,7 @@ int main(int argc, char* argv[]) {
         !opts.section_details && !opts.symbols && !opts.relocs &&
         !opts.dynamic && !opts.notes && !opts.version_info &&
         !opts.arch_specific && !opts.section_groups &&
-        !opts.histogram && !opts.got_plt &&
+        !opts.histogram && !opts.got_plt && !opts.checksec && !opts.layout &&
         opts.hex_section_num < 0 && opts.hex_section_name.empty()) {
         print_usage(argv[0]);
         return 1;

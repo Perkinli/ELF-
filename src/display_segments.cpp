@@ -17,6 +17,7 @@
 
 #include "elf_parser.h"
 #include "elf_strings.h"
+#include "color.h"
 #include <cstdio>
 #include <cstring>
 
@@ -58,14 +59,21 @@ void display_program_headers(const ELFParser& elf) {
             uint64_t pmemsz  = elf.read64(&ph->p_memsz);
             uint64_t palign  = elf.read64(&ph->p_align);
 
-            printf("  %-14s 0x%06lx 0x%016lx 0x%016lx 0x%06lx 0x%06lx %-3s 0x%lx\n",
-                   phtype_str(ptype),
+            /* 段标志按权限着色：R绿 W红 E蓝 */
+            std::string fs = phflags_str(pflags);
+            char fcolored[64];
+            snprintf(fcolored, sizeof(fcolored), "%s%c%s%s%c%s%s%c%s",
+                     (pflags & PF_R) ? C_GREEN  : C_DIM, fs[0], C_RESET,
+                     (pflags & PF_W) ? C_RED    : C_DIM, fs[1], C_RESET,
+                     (pflags & PF_X) ? C_BCYAN  : C_DIM, fs[2], C_RESET);
+            printf("  %s%-14s%s 0x%06lx %s0x%016lx%s 0x%016lx 0x%06lx 0x%06lx %s 0x%lx\n",
+                   phtype_color(ptype), phtype_str(ptype), C_RESET,
                    (unsigned long)poffset,
-                   (unsigned long)pvaddr,
+                   C_YELLOW, (unsigned long)pvaddr, C_RESET,
                    (unsigned long)ppaddr,
                    (unsigned long)pfilesz,
                    (unsigned long)pmemsz,
-                   phflags_str(pflags).c_str(),
+                   fcolored,
                    (unsigned long)palign);
 
             /* 特殊：INTERP段显示动态链接器路径 */
@@ -86,12 +94,18 @@ void display_program_headers(const ELFParser& elf) {
             uint32_t pmemsz  = elf.read32(&ph->p_memsz);
             uint32_t palign  = elf.read32(&ph->p_align);
 
-            printf("  %-14s 0x%06x 0x%08x 0x%08x 0x%05x 0x%05x %-3s 0x%x\n",
-                   phtype_str(ptype),
-                   poffset, pvaddr, ppaddr,
-                   pfilesz, pmemsz,
-                   phflags_str(pflags).c_str(),
-                   palign);
+            std::string fs32 = phflags_str(pflags);
+            char fc32[64];
+            snprintf(fc32, sizeof(fc32), "%s%c%s%s%c%s%s%c%s",
+                     (pflags & PF_R) ? C_GREEN : C_DIM, fs32[0], C_RESET,
+                     (pflags & PF_W) ? C_RED   : C_DIM, fs32[1], C_RESET,
+                     (pflags & PF_X) ? C_BCYAN : C_DIM, fs32[2], C_RESET);
+            printf("  %s%-14s%s 0x%06x %s0x%08x%s 0x%08x 0x%05x 0x%05x %s 0x%x\n",
+                   phtype_color(ptype), phtype_str(ptype), C_RESET,
+                   poffset,
+                   C_YELLOW, pvaddr, C_RESET,
+                   ppaddr, pfilesz, pmemsz,
+                   fc32, palign);
 
             if (ptype == PT_INTERP && pfilesz > 0 &&
                 poffset + pfilesz <= elf.rawSize()) {

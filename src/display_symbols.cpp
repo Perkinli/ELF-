@@ -23,6 +23,7 @@
 
 #include "elf_parser.h"
 #include "elf_strings.h"
+#include "color.h"
 #include <cstdio>
 #include <vector>
 
@@ -48,26 +49,30 @@ static void print_symbol_table(const ELFParser& elf, int sec_idx,
         uint8_t sbind = ELF32_ST_BIND(s.info);
         uint8_t svis  = ELF32_ST_VISIBILITY(s.other);
 
+        const char* bc = sym_bind_color(sbind);
+        /* 函数符号名用绿色，对象用青色，其他用默认 */
+        const char* nc = (stype == STT_FUNC)   ? C_BGREEN :
+                         (stype == STT_OBJECT) ? C_CYAN   : "";
         if (elf.is64bit()) {
-            printf("  %4zu: %016lx %5lu %-7s %-6s %-8s %3s %s\n",
+            printf("  %4zu: %s%016lx%s %5lu %s%-7s%s %s%-6s%s %-8s %3s %s%s%s\n",
                    i,
-                   (unsigned long)s.value,
+                   C_YELLOW, (unsigned long)s.value, C_RESET,
                    (unsigned long)s.size,
-                   sym_type_str(stype),
-                   sym_bind_str(sbind),
+                   C_MAGENTA, sym_type_str(stype), C_RESET,
+                   bc, sym_bind_str(sbind), C_RESET,
                    sym_vis_str(svis),
                    sym_shndx_str(s.shndx).c_str(),
-                   s.name.c_str());
+                   nc, s.name.c_str(), C_RESET);
         } else {
-            printf("  %4zu: %08lx %5lu %-7s %-6s %-8s %3s %s\n",
+            printf("  %4zu: %s%08lx%s %5lu %s%-7s%s %s%-6s%s %-8s %3s %s%s%s\n",
                    i,
-                   (unsigned long)s.value,
+                   C_YELLOW, (unsigned long)s.value, C_RESET,
                    (unsigned long)s.size,
-                   sym_type_str(stype),
-                   sym_bind_str(sbind),
+                   C_MAGENTA, sym_type_str(stype), C_RESET,
+                   bc, sym_bind_str(sbind), C_RESET,
                    sym_vis_str(svis),
                    sym_shndx_str(s.shndx).c_str(),
-                   s.name.c_str());
+                   nc, s.name.c_str(), C_RESET);
         }
     }
 }
